@@ -11,15 +11,12 @@ namespace Restifizer {
 		private string clientId;
 		private string clientSecret;
 		private string accessToken;
-		
-		void Start () {
-			Instance = this;
-		}
 
 		void Awake() {
 			if (errorHandler != null && !(errorHandler is IErrorHandler)) {
 				Debug.LogError("Wrong ErrorHandler, it should implement IErrorHandler");
 			}
+            Instance = this;
 		}
 
 		public RestifizerManager ConfigClientAuth(string clientId, string clientSecret) {
