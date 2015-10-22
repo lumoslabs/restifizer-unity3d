@@ -30,10 +30,14 @@ namespace Restifizer {
 			return this;
 		}
 		
-		public RestifizerRequest ResourceAt(string resourceName) {
+        public RestifizerRequest ResourceAt(string resourceName) {
+            return ResourceAt(resourceName,baseUrl);
+        }
+        
+		public RestifizerRequest ResourceAt(string resourceName, string thisBaseUrl) {
 			RestifizerRequest restifizerRequest = new RestifizerRequest(this, (IErrorHandler)errorHandler);
 			restifizerRequest.FetchList = true;
-			restifizerRequest.Path += baseUrl + "/" + resourceName;
+			restifizerRequest.Path += thisBaseUrl + "/" + resourceName;
 			return restifizerRequest;
 		}
 		
