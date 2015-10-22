@@ -15,7 +15,7 @@ namespace Restifizer {
 		
 		public RestifizerResponse(HTTP.Request request, Hashtable result, string tag) {
 			this.IsList = false;
-			this.Status = request.response.status;
+			this.Status = request.response != null ? request.response.status : 0;
 			this.Resource = result;
 			this.HasError = false;
 			this.Request = request;
@@ -24,7 +24,7 @@ namespace Restifizer {
 
 		public RestifizerResponse(HTTP.Request request, ArrayList result, string tag) {
 			this.IsList = true;
-			this.Status = request.response.status;
+			this.Status = request.response != null ? request.response.status : 0;
 			this.ResourceList = result;
             this.HasError = false;
 			this.Request = request;
@@ -32,7 +32,7 @@ namespace Restifizer {
 		}
 
 		public RestifizerResponse(HTTP.Request request, RestifizerError error, string tag) {
-			this.Status = request.response.status;
+			this.Status = request.response != null ? request.response.status : 0;
 			this.HasError = true;
 			this.Error = error;
 			this.Request = request;
