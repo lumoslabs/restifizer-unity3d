@@ -211,10 +211,10 @@ namespace Restifizer {
 					if (errorHandler != null) {
 						bool propagateResult = !errorHandler.onRestifizerError(error);
 						if (propagateResult) {
-							callback(null);
+							callback(new RestifizerResponse(request, error, tag));
 						}
 					} else {
-						callback(null);
+						callback(new RestifizerResponse(request, error, tag));
 					}
 					return;
 				}
@@ -225,10 +225,10 @@ namespace Restifizer {
 					if (errorHandler != null) {
 						bool propagateResult = !errorHandler.onRestifizerError(error);
 						if (propagateResult) {
-							callback(null);
+							callback(new RestifizerResponse(request, error, tag));
 						}
 					} else {
-						callback(null);
+						callback(new RestifizerResponse(request, error, tag));
 					}
 					return;
 				}
@@ -250,7 +250,7 @@ namespace Restifizer {
 					callback(new RestifizerResponse(request, (Hashtable)responseResult, tag));
 				} else {
 					Debug.LogWarning("Unsupported type in response: " + responseResult.GetType());
-					callback(null);
+					callback(new RestifizerResponse(request, RestifizerErrorFactory.Create(-3, responseResult, tag), tag));
 				}
 			});
 		}
