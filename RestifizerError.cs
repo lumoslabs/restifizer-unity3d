@@ -8,6 +8,14 @@ namespace Restifizer {
 		public ArrayList ErrorListRaw;
 		public string Tag;
 		
+        public enum SpecialStatus
+        {
+            Timeout = -1,
+            BadJSON = -2,
+            UnsupportedJSONType = -3,
+            Count = 4
+        };
+        
 		public RestifizerError(int status, object error, string tag) {
 			this.Status = status;
 			this.Tag = tag;
@@ -27,11 +35,25 @@ namespace Restifizer {
 		}
 		
 		override public string ToString() {
-			string result = "tag: " + Tag + ", status: " + Status + ", raw: ";
+            string statusString = "";
+            if ( Status == -1 )
+            {
+                statusString = " (Probably timeout) ";
+            }
+            else if ( Status == -2 )
+            {
+                statusString = " (Bad JSON) ";
+            }
+            else if ( Status == -3 )
+            {
+                statusString = " (unsupported JSON data type) ";
+            }
+            
+			string result = "tag: " + Tag + ", status: " + Status + statusString + ", raw: ";
 			if (ErrorRaw != null) {
-				result += ErrorRaw.ToString();
+				result += JSON.Stringify(ErrorRaw);
 			} else if (ErrorListRaw != null) {
-				result += ErrorListRaw.ToString();
+				result += JSON.Stringify(ErrorListRaw);
 			} else {
 				result += "<EMPTY>";
 			}
