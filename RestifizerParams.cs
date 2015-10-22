@@ -6,5 +6,8 @@ namespace Restifizer {
 		string GetClientId();
 		string GetClientSecret();
 		string GetAccessToken();
+        bool UseDataRootInParameters();
+        string GetClientIdKey();
+        string GetClientSecretKey();
 	}
 }

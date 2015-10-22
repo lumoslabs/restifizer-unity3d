@@ -5,6 +5,11 @@ namespace Restifizer {
 	public class RestifizerManager: MonoBehaviour, RestifizerParams {
 		
 		public string baseUrl;
+        public string baseStagingUrl;
+        public bool useStagingUrl = false;
+        public bool useDataRootInParameters = false;
+        public string clientIdKey = "client_id";
+        public string clientSecretKey = "client_secret";
 		public MonoBehaviour errorHandler;
 		public static RestifizerManager Instance;
 		
@@ -31,7 +36,7 @@ namespace Restifizer {
 		}
 		
         public RestifizerRequest ResourceAt(string resourceName) {
-            return ResourceAt(resourceName,baseUrl);
+            return ResourceAt(resourceName, useStagingUrl ? baseStagingUrl : baseUrl);
         }
         
 		public RestifizerRequest ResourceAt(string resourceName, string thisBaseUrl) {
@@ -54,5 +59,17 @@ namespace Restifizer {
 		public string GetAccessToken() {
 			return accessToken;
 		}
+        
+        public bool UseDataRootInParameters() {
+            return useDataRootInParameters;
+        }
+        
+        public string GetClientIdKey() {
+            return clientIdKey;
+        }
+        
+        public string GetClientSecretKey() {
+            return clientSecretKey;
+        }
 	}
 }

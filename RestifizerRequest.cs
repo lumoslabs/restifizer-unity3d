@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿#define VERBOSE_LOGGING
+
+using UnityEngine;
 using System;
 using System.Collections;
 
@@ -101,6 +103,10 @@ namespace Restifizer {
 		}
 		
 		public void Get(Action<RestifizerResponse> callback = null) {
+            if (this.authType == AuthType.Client)
+            {
+                this.Path = GetAuthUrl( this.Path );
+            }
 			performRequest("get", null, callback);
 		}
 		
@@ -178,14 +184,32 @@ namespace Restifizer {
 				url += "?" + queryStr;
 			}
 			
+            if (parameters != null && restifizerParams.UseDataRootInParameters())
+            {
+                Hashtable newParams = new Hashtable();
+                newParams["data"] = parameters;
+                parameters = newParams;
+            }
 			
 			// Handle authentication
-			if (this.authType == AuthType.Client) {
+			if (this.authType == AuthType.Client && !method.Equals("get")) {
 				if (parameters == null) {
 					parameters = new Hashtable();
 				}
-				parameters.Add( "client_id", restifizerParams.GetClientId() );
-				parameters.Add( "client_secret", restifizerParams.GetClientSecret() );
+                
+                Hashtable insertObject = parameters;
+                if ( restifizerParams.UseDataRootInParameters() )
+                {
+                    if ( parameters["data"] == null )
+                    {
+                        parameters["data"] = new Hashtable();
+                        
+                    }
+                    insertObject = parameters["data"] as Hashtable;
+                }
+                
+				insertObject.Add( restifizerParams.GetClientIdKey(), restifizerParams.GetClientId() );
+				insertObject.Add( restifizerParams.GetClientSecretKey(), restifizerParams.GetClientSecret() );
 				
 				someRequest = new HTTP.Request(method, url, parameters);
 			} else if (this.authType == AuthType.Bearer) {
@@ -202,6 +226,10 @@ namespace Restifizer {
 					someRequest = new HTTP.Request(method, url, parameters);
 				}
 			}
+
+#if VERBOSE_LOGGING
+            Debug.Log( "RestifizerRequest: " + method + " " + url + "\nparams: " + JSON.Stringify(parameters));
+#endif
 
 			string tag = this.Tag;
 			// Perform request
@@ -254,5 +282,22 @@ namespace Restifizer {
 				}
 			});
 		}
+        
+        //adds auth data to the passed URL. You MUST use this for all GET calls that require auth.
+        protected string GetAuthUrl( string baseUrl )
+        {
+            string url = baseUrl;
+            if ( url.Contains( "?" ) )
+            {
+                url += "&";
+            }
+            else
+            {
+                url += "?";
+            }
+            url += "data[" + restifizerParams.GetClientIdKey()     + "]=" + WWW.EscapeURL( restifizerParams.GetClientId() ) + "&";
+            url += "data[" + restifizerParams.GetClientSecretKey() + "]=" + WWW.EscapeURL( restifizerParams.GetClientSecret() );
+            return url;
+        }
 	}
 }
