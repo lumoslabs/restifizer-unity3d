@@ -33,6 +33,9 @@ namespace Restifizer {
 			this.errorHandler = errorHandler;
 			
 			this.Path = "";
+#if VERBOSE_LOGGING
+            HTTP.Request.verboseStatusLogging = true;
+#endif
 		}
 		
 		public RestifizerRequest WithClientAuth() {
@@ -102,12 +105,16 @@ namespace Restifizer {
 			this.FetchList = true;
 		}
 		
-		public void Get(Action<RestifizerResponse> callback = null) {
+        public void Get(Action<RestifizerResponse> callback = null) {
+            Get(null, callback);
+        }
+		public void Get(Hashtable parameters = null, Action<RestifizerResponse> callback = null) {
             if (this.authType == AuthType.Client)
             {
                 this.Path = GetAuthUrl( this.Path );
             }
-			performRequest("get", null, callback);
+            this.Path = GetUrlWithParams( this.Path, parameters );
+			performRequest("get", parameters, callback);
 		}
 		
 		public void Post(Hashtable parameters = null, Action<RestifizerResponse> callback = null) {
@@ -297,6 +304,36 @@ namespace Restifizer {
             }
             url += "data[" + restifizerParams.GetClientIdKey()     + "]=" + WWW.EscapeURL( restifizerParams.GetClientId() ) + "&";
             url += "data[" + restifizerParams.GetClientSecretKey() + "]=" + WWW.EscapeURL( restifizerParams.GetClientSecret() );
+            return url;
+        }
+        
+        protected string GetUrlWithParams( string baseUrl, Hashtable parameters )
+        {
+            if ( parameters == null || parameters.Count <= 0 )
+            {
+                return baseUrl;
+            }
+            
+            string url = baseUrl;
+            if ( url.Contains( "?" ) )
+            {
+                url += "&";
+            }
+            else
+            {
+                url += "?";
+            }
+            
+            bool useAmp = false;
+            foreach ( string key in parameters.Keys )
+            {
+                if ( useAmp )
+                {
+                    url += "&";
+                }
+                url += "data[" + key + "]=" + WWW.EscapeURL( JSON.Stringify( parameters[key] ) );//.Replace( "%5b", "[" ).Replace( "%5d", "]" ).Replace( "%22", "" );
+            }
+            
             return url;
         }
 	}
