@@ -1,4 +1,5 @@
-﻿#define VERBOSE_LOGGING
+﻿//#define VERBOSE_LOGGING
+#define ERROR_LOGGING
 
 using UnityEngine;
 using System;
@@ -242,7 +243,10 @@ namespace Restifizer {
 			// Perform request
 			someRequest.Send( ( request ) => {
 				if (request.response == null) {
-					RestifizerError error = RestifizerErrorFactory.Create(-1, null, tag);
+#if !VERBOSE_LOGGING && ERROR_LOGGING
+                    Debug.LogError( "RestifizerRequest failed: " + method + " " + url + "\nparams: " + JSON.Stringify(parameters));
+#endif
+					RestifizerError error = RestifizerErrorFactory.Create(-1, null, tag, url, parameters);
 					if (errorHandler != null) {
 						bool propagateResult = !errorHandler.onRestifizerError(error);
 						if (propagateResult) {
@@ -256,7 +260,10 @@ namespace Restifizer {
 				bool result = false;
 				object responseResult = JSON.JsonDecode(request.response.Text, ref result);
 				if (!result) {
-					RestifizerError error = RestifizerErrorFactory.Create(-2, request.response.Text, tag);
+#if !VERBOSE_LOGGING && ERROR_LOGGING
+                    Debug.LogError( "RestifizerRequest failed: " + method + " " + url + "\nparams: " + JSON.Stringify(parameters));
+#endif
+					RestifizerError error = RestifizerErrorFactory.Create(request.response.status, request.response.Text, tag, url, parameters);
 					if (errorHandler != null) {
 						bool propagateResult = !errorHandler.onRestifizerError(error);
 						if (propagateResult) {
@@ -270,7 +277,10 @@ namespace Restifizer {
 
 				bool hasError = request.response.status >= 300;
 				if (hasError) {
-					RestifizerError error = RestifizerErrorFactory.Create(request.response.status, responseResult, tag);
+#if !VERBOSE_LOGGING && ERROR_LOGGING
+                    Debug.LogError( "RestifizerRequest failed: " + method + " " + url + "\nparams: " + JSON.Stringify(parameters));
+#endif
+					RestifizerError error = RestifizerErrorFactory.Create(request.response.status, responseResult, tag, url, parameters);
 					if (errorHandler != null) {
 						bool propagateResult = !errorHandler.onRestifizerError(error);
 						if (propagateResult) {
@@ -285,7 +295,7 @@ namespace Restifizer {
 					callback(new RestifizerResponse(request, (Hashtable)responseResult, tag));
 				} else {
 					Debug.LogWarning("Unsupported type in response: " + responseResult.GetType());
-					callback(new RestifizerResponse(request, RestifizerErrorFactory.Create(-3, responseResult, tag), tag));
+					callback(new RestifizerResponse(request, RestifizerErrorFactory.Create(-3, responseResult, tag, url, parameters), tag));
 				}
 			});
 		}
@@ -324,14 +334,58 @@ namespace Restifizer {
                 url += "?";
             }
             
+            url += GetObjectAsUrlString( parameters );
+            
+            return url;
+        }
+        
+        //you CANNOT have nested ArrayLists or Hashtables. This tries to deal with nested Hashtables
+        //by inserting them into the root, but stuff could be broke. Nested ArrayLists are just ignored.
+        protected string GetObjectAsUrlString( Hashtable obj )
+        {
+            string url = "";
+            
             bool useAmp = false;
-            foreach ( string key in parameters.Keys )
+            foreach ( string key in obj.Keys )
             {
                 if ( useAmp )
                 {
                     url += "&";
                 }
-                url += "data[" + key + "]=" + WWW.EscapeURL( JSON.Stringify( parameters[key] ) );//.Replace( "%5b", "[" ).Replace( "%5d", "]" ).Replace( "%22", "" );
+                
+                string urlKey = "data[" + key + "]";
+                
+                if ( obj[ key ] is Hashtable )
+                {
+                    Debug.LogWarning( "RestifizerRequest: You shouldn't use nested Hashtables in GET requests!" );
+                    url += GetObjectAsUrlString( obj[ key ] as Hashtable );
+                }
+                else if ( obj[ key ] is ArrayList )
+                {
+                    ArrayList list = obj[ key ] as ArrayList;
+                    urlKey = urlKey + "[]";
+                    for ( int index = 0; index < list.Count; index++ )
+                    {
+                        if ( list[ index ] is ArrayList )
+                        {
+                            Debug.LogWarning( "RestifizerRequest: You can't use nested ArrayLists in GET requests!" );
+                        }
+                        else if ( list[ index ] is Hashtable )
+                        {
+                            Debug.LogWarning( "RestifizerRequest: You can't use Hashtables inside ArrayLists in GET requests!" );
+                        }
+                        else
+                        {
+                            url += urlKey + "=" + WWW.EscapeURL( list[ index ].ToString() );
+                        }
+                    }
+                }
+                else
+                {
+                    url += urlKey + "=" + WWW.EscapeURL( obj[ key ].ToString() );
+                }
+                
+                useAmp = true;
             }
             
             return url;
