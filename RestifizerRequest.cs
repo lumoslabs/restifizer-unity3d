@@ -278,7 +278,15 @@ namespace Restifizer {
 				bool hasError = request.response.status >= 300;
 				if (hasError) {
 #if !VERBOSE_LOGGING && ERROR_LOGGING
-                    Debug.LogError( "RestifizerRequest failed: " + method + " " + url + "\nparams: " + JSON.Stringify(parameters));
+                    if (request.response.status == 409)
+					{
+//						Debug.Log( "RestifizerRequest failed (user already assigned to squad): " + method + " " + url + "\nparams: " + JSON.Stringify(parameters));
+					}
+					else
+					{
+						Debug.LogError( "RestifizerRequest failed: " + method + " " + url + "\nparams: " + JSON.Stringify(parameters));
+					}
+
 #endif
 					RestifizerError error = RestifizerErrorFactory.Create(request.response.status, responseResult, tag, url, parameters);
 					if (errorHandler != null) {
