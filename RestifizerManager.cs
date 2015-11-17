@@ -43,6 +43,7 @@ namespace Restifizer {
 			RestifizerRequest restifizerRequest = new RestifizerRequest(this, (IErrorHandler)errorHandler);
 			restifizerRequest.FetchList = true;
 			restifizerRequest.Path += thisBaseUrl + "/" + resourceName;
+
 			return restifizerRequest;
 		}
 		

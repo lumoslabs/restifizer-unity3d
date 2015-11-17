@@ -226,7 +226,7 @@ namespace Restifizer {
 				} else {
 					someRequest = new HTTP.Request(method, url, parameters);
 				}
-				someRequest.SetHeader("Authorization", "Bearer " + restifizerParams.GetAccessToken());
+				someRequest.SetHeader("Authorization", "OAuth " + restifizerParams.GetAccessToken());
 			} else {
 				if (parameters == null) {
 					someRequest = new HTTP.Request(method, url);
@@ -259,6 +259,13 @@ namespace Restifizer {
 				}
 				bool result = false;
 				object responseResult = JSON.JsonDecode(request.response.Text, ref result);
+
+				if (responseResult == null && request.response.status == 200)
+				{
+					responseResult = new Hashtable();
+					result = true;
+				}
+
 				if (!result) {
 #if !VERBOSE_LOGGING && ERROR_LOGGING
                     Debug.LogError( "RestifizerRequest failed: " + method + " " + url + "\nparams: " + JSON.Stringify(parameters));
