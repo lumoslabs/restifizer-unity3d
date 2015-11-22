@@ -109,25 +109,47 @@ namespace Restifizer {
         public void Get(Action<RestifizerResponse> callback = null) {
             Get(null, callback);
         }
-		public void Get(Hashtable parameters = null, Action<RestifizerResponse> callback = null) {
+
+		public void Get(Hashtable parameters = null, Action<RestifizerResponse> callback = null) 
+		{
             if (this.authType == AuthType.Client)
             {
                 this.Path = GetAuthUrl( this.Path );
             }
             this.Path = GetUrlWithParams( this.Path, parameters );
-			performRequest("get", parameters, callback);
+
+			HTTP.Request someRequest = GetRequest ("get", parameters, callback);
+			SendRequest (someRequest, "get", parameters, callback);
+		}
+
+		public HTTP.Request GetPostRequest(Hashtable parameters = null, Action<RestifizerResponse> callback = null) 
+		{
+			HTTP.Request someRequest = GetRequest ("post", parameters, callback);
+
+			return someRequest;
+		}
+
+		public void SendPostRequest(HTTP.Request someRequest, Hashtable parameters = null, Action<RestifizerResponse> callback = null)
+		{
+			SendRequest (someRequest, "post", parameters, callback);
 		}
 		
-		public void Post(Hashtable parameters = null, Action<RestifizerResponse> callback = null) {
-			performRequest("post", parameters, callback);
+		public void Post(Hashtable parameters = null, Action<RestifizerResponse> callback = null) 
+		{
+			HTTP.Request someRequest = GetRequest ("post", parameters, callback);
+			SendRequest (someRequest, "post", parameters, callback);
 		}
 		
-		public void Put(Hashtable parameters = null, Action<RestifizerResponse> callback = null) {
-			performRequest("put", parameters, callback);
+		public void Put(Hashtable parameters = null, Action<RestifizerResponse> callback = null) 
+		{
+			HTTP.Request someRequest = GetRequest ("put", parameters, callback);
+			SendRequest (someRequest, "put", parameters, callback);
 		}
 		
-		public void Patch(Hashtable parameters = null, Action<RestifizerResponse> callback = null) {
-			performRequest("patch", parameters, callback);
+		public void Patch(Hashtable parameters = null, Action<RestifizerResponse> callback = null) 
+		{
+			HTTP.Request someRequest = GetRequest ("patch", parameters, callback);
+			SendRequest (someRequest, "patch", parameters, callback);
 		}
 		
 		public RestifizerRequest Copy() {
@@ -148,8 +170,9 @@ namespace Restifizer {
 			return restifizerRequest;
 		}
 		
-		private void performRequest(string method, Hashtable parameters = null, Action<RestifizerResponse> callback = null) {
-			
+		protected HTTP.Request GetRequest(string method, Hashtable parameters = null, Action<RestifizerResponse> callback = null) 
+		{
+		
 			HTTP.Request someRequest;
 			
 			string url = Path;
@@ -174,7 +197,7 @@ namespace Restifizer {
 				if (queryStr.Length > 0) {
 					queryStr += "&";
 				}
-				string filterValue = JSON.JsonEncode(filterParams);
+				string filterValue = JSON.JsonEncode (filterParams);
 				queryStr += "filter=" + filterValue;
 			}
 
@@ -184,7 +207,7 @@ namespace Restifizer {
 					if (queryStr.Length > 0) {
 						queryStr += "&";
 					}
-					queryStr += key + "=" + extraQuery[key];
+					queryStr += key + "=" + extraQuery [key];
 				}
 			}
 
@@ -192,46 +215,43 @@ namespace Restifizer {
 				url += "?" + queryStr;
 			}
 			
-            if (parameters != null && restifizerParams.UseDataRootInParameters())
-            {
-                Hashtable newParams = new Hashtable();
-                newParams["data"] = parameters;
-                parameters = newParams;
-            }
+			if (parameters != null && restifizerParams.UseDataRootInParameters ()) {
+				Hashtable newParams = new Hashtable ();
+				newParams ["data"] = parameters;
+				parameters = newParams;
+			}
 			
 			// Handle authentication
-			if (this.authType == AuthType.Client && !method.Equals("get")) {
+			if (this.authType == AuthType.Client && !method.Equals ("get")) {
 				if (parameters == null) {
-					parameters = new Hashtable();
+					parameters = new Hashtable ();
 				}
                 
-                Hashtable insertObject = parameters;
-                if ( restifizerParams.UseDataRootInParameters() )
-                {
-                    if ( parameters["data"] == null )
-                    {
-                        parameters["data"] = new Hashtable();
+				Hashtable insertObject = parameters;
+				if (restifizerParams.UseDataRootInParameters ()) {
+					if (parameters ["data"] == null) {
+						parameters ["data"] = new Hashtable ();
                         
-                    }
-                    insertObject = parameters["data"] as Hashtable;
-                }
+					}
+					insertObject = parameters ["data"] as Hashtable;
+				}
                 
-				insertObject.Add( restifizerParams.GetClientIdKey(), restifizerParams.GetClientId() );
-				insertObject.Add( restifizerParams.GetClientSecretKey(), restifizerParams.GetClientSecret() );
+				insertObject.Add (restifizerParams.GetClientIdKey (), restifizerParams.GetClientId ());
+				insertObject.Add (restifizerParams.GetClientSecretKey (), restifizerParams.GetClientSecret ());
 				
-				someRequest = new HTTP.Request(method, url, parameters);
+				someRequest = new HTTP.Request (method, url, parameters);
 			} else if (this.authType == AuthType.Bearer) {
 				if (parameters == null) {
-					someRequest = new HTTP.Request(method, url);
+					someRequest = new HTTP.Request (method, url);
 				} else {
-					someRequest = new HTTP.Request(method, url, parameters);
+					someRequest = new HTTP.Request (method, url, parameters);
 				}
-				someRequest.SetHeader("Authorization", "OAuth " + restifizerParams.GetAccessToken());
+				someRequest.SetHeader ("Authorization", "OAuth " + restifizerParams.GetAccessToken ());
 			} else {
 				if (parameters == null) {
-					someRequest = new HTTP.Request(method, url);
+					someRequest = new HTTP.Request (method, url);
 				} else {
-					someRequest = new HTTP.Request(method, url, parameters);
+					someRequest = new HTTP.Request (method, url, parameters);
 				}
 			}
 
@@ -239,6 +259,13 @@ namespace Restifizer {
             Debug.Log( "RestifizerRequest: " + method + " " + url + "\nparams: " + JSON.Stringify(parameters));
 #endif
 
+			return someRequest;
+
+		}
+
+		private void SendRequest(HTTP.Request someRequest, string method, Hashtable parameters = null, Action<RestifizerResponse> callback = null)
+		{
+			string url = Path;
 			string tag = this.Tag;
 			// Perform request
 			someRequest.Send( ( request ) => {
