@@ -269,18 +269,23 @@ namespace Restifizer {
 			string tag = this.Tag;
 			// Perform request
 			someRequest.Send( ( request ) => {
-				if (request.response == null) {
+				if (request.response == null) 
+				{
 #if !VERBOSE_LOGGING && ERROR_LOGGING
                     Debug.LogError( "RestifizerRequest failed: " + method + " " + url + "\nparams: " + JSON.Stringify(parameters));
 #endif
 					RestifizerError error = RestifizerErrorFactory.Create(-1, null, tag, url, parameters);
-					if (errorHandler != null) {
+					if (errorHandler != null)
+					{
 						bool propagateResult = !errorHandler.onRestifizerError(error);
-						if (propagateResult) {
-							callback(new RestifizerResponse(request, error, tag));
+						if (propagateResult) 
+						{
+							DoCallCallback( callback, new RestifizerResponse(request, error, tag) );
 						}
-					} else {
-						callback(new RestifizerResponse(request, error, tag));
+					} 
+					else 
+					{
+						DoCallCallback( callback, new RestifizerResponse(request, error, tag) );
 					}
 					return;
 				}
@@ -293,24 +298,30 @@ namespace Restifizer {
 					result = true;
 				}
 
-				if (!result) {
+				if (!result) 
+				{
 #if !VERBOSE_LOGGING && ERROR_LOGGING
                     Debug.LogError( "RestifizerRequest failed: " + method + " " + url + "\nparams: " + JSON.Stringify(parameters));
 #endif
 					RestifizerError error = RestifizerErrorFactory.Create(request.response.status, request.response.Text, tag, url, parameters);
-					if (errorHandler != null) {
+					if (errorHandler != null) 
+					{
 						bool propagateResult = !errorHandler.onRestifizerError(error);
-						if (propagateResult) {
-							callback(new RestifizerResponse(request, error, tag));
+						if (propagateResult) 
+						{
+							DoCallCallback( callback, new RestifizerResponse(request, error, tag) );
 						}
-					} else {
-						callback(new RestifizerResponse(request, error, tag));
+					} 
+					else 
+					{
+						DoCallCallback(	callback, new RestifizerResponse(request, error, tag) );
 					}
 					return;
 				}
 
 				bool hasError = request.response.status >= 300;
-				if (hasError) {
+				if (hasError) 
+				{
 #if !VERBOSE_LOGGING && ERROR_LOGGING
                     if (request.response.status == 409)
 					{
@@ -323,23 +334,41 @@ namespace Restifizer {
 
 #endif
 					RestifizerError error = RestifizerErrorFactory.Create(request.response.status, responseResult, tag, url, parameters);
-					if (errorHandler != null) {
+					if (errorHandler != null) 
+					{
 						bool propagateResult = !errorHandler.onRestifizerError(error);
-						if (propagateResult) {
-							callback(new RestifizerResponse(request, error, tag));
+						if (propagateResult) 
+						{
+							DoCallCallback( callback, new RestifizerResponse(request, error, tag) );
 						}
-					} else {
-						callback(new RestifizerResponse(request, error, tag));
+					} 
+					else 
+					{
+						DoCallCallback( callback, new RestifizerResponse(request, error, tag) );
 					}
-				} else if (responseResult is ArrayList) {
-					callback(new RestifizerResponse(request, (ArrayList)responseResult, tag));
-				} else if (responseResult is Hashtable) {
-					callback(new RestifizerResponse(request, (Hashtable)responseResult, tag));
-				} else {
+				} 
+				else if (responseResult is ArrayList) 
+				{
+					DoCallCallback( callback, new RestifizerResponse(request, (ArrayList)responseResult, tag) );
+				} 
+				else if (responseResult is Hashtable)
+				{
+					DoCallCallback ( callback, new RestifizerResponse(request, (Hashtable)responseResult, tag) );
+				} 
+				else 
+				{
 					Debug.LogWarning("Unsupported type in response: " + responseResult.GetType());
-					callback(new RestifizerResponse(request, RestifizerErrorFactory.Create(-3, responseResult, tag, url, parameters), tag));
+					DoCallCallback( callback, new RestifizerResponse(request, RestifizerErrorFactory.Create(-3, responseResult, tag, url, parameters), tag) );
 				}
 			});
+		}
+
+		protected void DoCallCallback ( Action<RestifizerResponse> callback, RestifizerResponse response )
+		{
+			if ( callback != null )
+			{
+				callback ( response );
+			}
 		}
         
         //adds auth data to the passed URL. You MUST use this for all GET calls that require auth.
