@@ -145,13 +145,25 @@ namespace Restifizer {
 			HTTP.Request someRequest = GetRequest ("put", parameters, callback);
 			SendRequest (someRequest, "put", parameters, callback);
 		}
+
+		public HTTP.Request GetPutRequest(Hashtable parameters = null, Action<RestifizerResponse> callback = null) 
+		{
+			HTTP.Request someRequest = GetRequest ("put", parameters, callback);
+			
+			return someRequest;
+		}
+		
+		public void SendPutRequest(HTTP.Request someRequest, Hashtable parameters = null, Action<RestifizerResponse> callback = null)
+		{
+			SendRequest (someRequest, "put", parameters, callback);
+		}
 		
 		public void Patch(Hashtable parameters = null, Action<RestifizerResponse> callback = null) 
 		{
 			HTTP.Request someRequest = GetRequest ("patch", parameters, callback);
 			SendRequest (someRequest, "patch", parameters, callback);
 		}
-		
+
 		public RestifizerRequest Copy() {
 			RestifizerRequest restifizerRequest = new RestifizerRequest(restifizerParams, errorHandler);
 			restifizerRequest.Path = Path;
